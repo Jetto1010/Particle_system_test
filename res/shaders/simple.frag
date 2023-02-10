@@ -3,6 +3,9 @@
 in layout(location = 0) vec3 normal;
 in layout(location = 1) vec2 textureCoordinates;
 
+const int numLights = 3;
+uniform layout(location = 5) vec3 lightPosition[numLights];
+
 out vec4 color;
 
 float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
