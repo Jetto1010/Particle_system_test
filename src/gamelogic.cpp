@@ -157,9 +157,11 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     }
 
     lightSources[1].lightNode->position = glm::vec3(10, 10, 10);
-    lightSources[2].lightNode->position = glm::vec3(20, 20, 20);
+    lightSources[2].lightNode->position = glm::vec3(0, 0, 0);
 
     ballNode->children.push_back(lightSources[0].lightNode);
+    rootNode->children.push_back(lightSources[1].lightNode);
+    rootNode->children.push_back(lightSources[2].lightNode);
 
 
     getTimeDeltaSeconds();
@@ -385,8 +387,11 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 }
 
 void renderNode(SceneNode* node) {
+    glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(node->currentTransformationMatrix)));
+
     glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
     glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->MVP));
+    glUniformMatrix3fv(5, 1, GL_FALSE, glm::value_ptr(normalMat));
 
     switch(node->nodeType) {
         case GEOMETRY:
@@ -396,7 +401,7 @@ void renderNode(SceneNode* node) {
             }
             break;
         case POINT_LIGHT:
-            glUniform3fv(5, 1, glm::value_ptr( lightSources[node->vertexArrayObjectID].lightPosition));
+            glUniform3fv(10, 1, glm::value_ptr( lightSources[node->vertexArrayObjectID].lightPosition));
             break;
         case SPOT_LIGHT: break;
     }
