@@ -99,10 +99,9 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
 // LightSource lightSources[/*Put number of light sources you want here*/];
 struct LightSource {
     SceneNode* lightNode;
-    glm::vec3  colour;
     glm::vec3 lightPosition;
 };
-unsigned int const numLights = 3;
+int const numLights = 3;
 LightSource lightSources[numLights];
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
@@ -150,18 +149,18 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->vertexArrayObjectID = ballVAO;
     ballNode->VAOIndexCount       = sphere.indices.size();
 
-    for(auto & lightSource : lightSources) {
-        lightSource.lightNode = createSceneNode();
-        lightSource.lightNode->vertexArrayObjectID = POINT_LIGHT;
-        lightSource.colour = glm::vec3(1.0);
+    for(int i = 0; i < numLights; i ++){
+        lightSources[i].lightNode = createSceneNode();
+        lightSources[i].lightNode->nodeType = POINT_LIGHT;
+        lightSources[i].lightNode->vertexArrayObjectID = i;
     }
 
-    lightSources[1].lightNode->position = glm::vec3(10, 10, 10);
-    lightSources[2].lightNode->position = glm::vec3(0, 0, 0);
+    lightSources[2].lightNode->position = glm::vec3(10, 20, 30);
 
     ballNode->children.push_back(lightSources[0].lightNode);
-    rootNode->children.push_back(lightSources[1].lightNode);
-    rootNode->children.push_back(lightSources[2].lightNode);
+    padNode->children.push_back(lightSources[1].lightNode);
+    boxNode->children.push_back(lightSources[2].lightNode);
+
 
 
     getTimeDeltaSeconds();
@@ -330,7 +329,7 @@ void updateFrame(GLFWwindow* window) {
     glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
 
     glm::vec3 cameraPosition = glm::vec3(0, 2, -20);
-
+    glUniform3fv(11, 1, glm::value_ptr((-cameraPosition)));
     // Some math to make the camera move in a nice way
     float lookRotation = -0.6 / (1 + exp(-5 * (padPositionX-0.5))) + 0.3;
     glm::mat4 cameraTransform =
@@ -387,7 +386,7 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 }
 
 void renderNode(SceneNode* node) {
-    glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(node->currentTransformationMatrix)));
+    glm::mat3 normalMat = glm::transpose(glm::inverse(node->currentTransformationMatrix));
 
     glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
     glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->MVP));
@@ -401,11 +400,10 @@ void renderNode(SceneNode* node) {
             }
             break;
         case POINT_LIGHT:
-            glUniform3fv(10, 1, glm::value_ptr( lightSources[node->vertexArrayObjectID].lightPosition));
+            glUniform3fv(10, 1, glm::value_ptr(lightSources[node->vertexArrayObjectID].lightPosition));
             break;
         case SPOT_LIGHT: break;
     }
-
     for(SceneNode* child : node->children) {
         renderNode(child);
     }
