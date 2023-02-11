@@ -10,12 +10,13 @@ uniform layout(location = 5) mat3 normalMat;
 
 out layout(location = 0) vec3 normal_out;
 out layout(location = 1) vec2 textureCoordinates_out;
-out layout(location = 2) vec4 fragPos;
+out layout(location = 2) vec3 fragPos;
 
 void main()
 {
     normal_out = normalize(normalMat * normal_in);
-    fragPos = model * vec4(position, 1.0);
+    fragPos = vec3(model * vec4(position, 1));
+
     textureCoordinates_out = textureCoordinates_in;
-    gl_Position = MVP * vec4(position, 1.0f);
+    gl_Position = MVP * vec4(position, 1);
 }

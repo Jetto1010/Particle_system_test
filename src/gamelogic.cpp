@@ -51,8 +51,6 @@ const glm::vec3 padDimensions(30, 3, 40);
 glm::vec3 ballPosition(0, ballRadius + padDimensions.y, boxDimensions.z / 2);
 glm::vec3 ballDirection(1, 1, 0.2f);
 
-glm::mat4 VP;
-
 CommandLineOptions options;
 
 bool hasStarted        = false;
@@ -92,17 +90,14 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);
 }
 
-//// A few lines to help you if you've never used c++ structs
-// struct LightSource {
-//     bool a_placeholder_value;
-// };
-// LightSource lightSources[/*Put number of light sources you want here*/];
 struct LightSource {
     SceneNode* lightNode;
     glm::vec3 lightPosition;
 };
 int const numLights = 3;
 LightSource lightSources[numLights];
+
+glm::mat4 VP;
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     buffer = new sf::SoundBuffer();
@@ -129,7 +124,6 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     unsigned int boxVAO  = generateBuffer(box);
     unsigned int padVAO  = generateBuffer(pad);
 
-
     // Construct scene
     rootNode = createSceneNode();
     boxNode  = createSceneNode();
@@ -155,12 +149,13 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
         lightSources[i].lightNode->vertexArrayObjectID = i;
     }
 
-    lightSources[2].lightNode->position = glm::vec3(10, 20, 30);
+    lightSources[0].lightNode->position = glm::vec3(1, 1, 1);
+    lightSources[1].lightNode->position = glm::vec3(0, 0, 0);
+    lightSources[2].lightNode->position = glm::vec3(50, 20, -50);
 
     ballNode->children.push_back(lightSources[0].lightNode);
     padNode->children.push_back(lightSources[1].lightNode);
     boxNode->children.push_back(lightSources[2].lightNode);
-
 
 
     getTimeDeltaSeconds();
@@ -329,7 +324,6 @@ void updateFrame(GLFWwindow* window) {
     glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
 
     glm::vec3 cameraPosition = glm::vec3(0, 2, -20);
-    glUniform3fv(11, 1, glm::value_ptr((-cameraPosition)));
     // Some math to make the camera move in a nice way
     float lookRotation = -0.6 / (1 + exp(-5 * (padPositionX-0.5))) + 0.3;
     glm::mat4 cameraTransform =
@@ -352,11 +346,10 @@ void updateFrame(GLFWwindow* window) {
         boxNode->position.z - (boxDimensions.z/2) + (padDimensions.z/2) + (1 - padPositionZ) * (boxDimensions.z - padDimensions.z)
     };
 
-    updateNodeTransformations(rootNode, glm::mat4(1.0));
+    glUniform3fv(9, 1, glm::value_ptr(cameraPosition));
+    glUniform3fv(10, 1, glm::value_ptr(ballPosition));
 
-
-
-
+    updateNodeTransformations(rootNode, glm::mat4(1));
 }
 
 void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar) {
@@ -375,7 +368,7 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     switch(node->nodeType) {
         case GEOMETRY: break;
         case POINT_LIGHT:
-            lightSources[node->vertexArrayObjectID].lightPosition = glm::vec3(node->currentTransformationMatrix * glm::vec4(0.0, 0.0, 0.0, 1.0));
+            lightSources[node->vertexArrayObjectID].lightPosition = glm::vec3(node->currentTransformationMatrix * glm::vec4(0, 0, 0, 1));
             break;
         case SPOT_LIGHT: break;
     }
@@ -400,7 +393,9 @@ void renderNode(SceneNode* node) {
             }
             break;
         case POINT_LIGHT:
-            glUniform3fv(10, 1, glm::value_ptr(lightSources[node->vertexArrayObjectID].lightPosition));
+            glUniform3fv(6, 1, glm::value_ptr(lightSources[0].lightPosition));
+            glUniform3fv(7, 1, glm::value_ptr(lightSources[1].lightPosition));
+            glUniform3fv(8, 1, glm::value_ptr(lightSources[2].lightPosition));
             break;
         case SPOT_LIGHT: break;
     }
