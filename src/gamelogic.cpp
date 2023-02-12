@@ -93,6 +93,7 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
 struct LightSource {
     SceneNode* lightNode;
     glm::vec3 lightPosition;
+    glm::vec3 colour;
 };
 int const numLights = 3;
 LightSource lightSources[numLights];
@@ -149,13 +150,17 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
         lightSources[i].lightNode->vertexArrayObjectID = i;
     }
 
-    lightSources[0].lightNode->position = glm::vec3(1, 1, 1);
-    lightSources[1].lightNode->position = glm::vec3(0, 0, 0);
-    lightSources[2].lightNode->position = glm::vec3(50, 20, -50);
+    lightSources[0].colour = glm::vec3(1,0,0);
+    lightSources[1].colour = glm::vec3(0,1,0);
+    lightSources[2].colour = glm::vec3(0,0,1);
+
+    lightSources[0].lightNode->position = glm::vec3(3, 3, 3);
+    lightSources[1].lightNode->position = glm::vec3(2, 2, 2);
+    lightSources[2].lightNode->position = glm::vec3(1, 1, 1);
 
     ballNode->children.push_back(lightSources[0].lightNode);
-    padNode->children.push_back(lightSources[1].lightNode);
-    boxNode->children.push_back(lightSources[2].lightNode);
+    ballNode->children.push_back(lightSources[1].lightNode);
+    ballNode->children.push_back(lightSources[2].lightNode);
 
 
     getTimeDeltaSeconds();
@@ -393,9 +398,13 @@ void renderNode(SceneNode* node) {
             }
             break;
         case POINT_LIGHT:
-            glUniform3fv(6, 1, glm::value_ptr(lightSources[0].lightPosition));
-            glUniform3fv(7, 1, glm::value_ptr(lightSources[1].lightPosition));
-            glUniform3fv(8, 1, glm::value_ptr(lightSources[2].lightPosition));
+            for(int i = 0; i < numLights; i++) {
+                GLint locationLightPosition = shader->getUniformFromName(fmt::format("sources[{}].lightPosition", i));
+                glUniform3fv(locationLightPosition, 1, glm::value_ptr(lightSources[i].lightPosition));
+
+                GLint locationLightColour = shader->getUniformFromName(fmt::format("sources[{}].colour", i));
+                glUniform3fv(locationLightColour, 1, glm::value_ptr(lightSources[i].colour));
+            }
             break;
         case SPOT_LIGHT: break;
     }
