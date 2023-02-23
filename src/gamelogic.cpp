@@ -100,6 +100,17 @@ LightSource lightSources[numLights];
 
 glm::mat4 VP;
 
+unsigned int getTextureID(PNGImage *image) {
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width, image->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->pixels.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    return texture;
+}
+
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     buffer = new sf::SoundBuffer();
     if (!buffer->loadFromFile("../res/Hall of the Mountain King.ogg")) {
@@ -114,6 +125,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     shader = new Gloom::Shader();
     shader->makeBasicShader("../res/shaders/simple.vert", "../res/shaders/simple.frag");
     shader->activate();
+
+    PNGImage charmap = loadPNGFile("../res/textures/charmap.png");
 
     // Create meshes
     Mesh pad = cube(padDimensions, glm::vec2(30, 40), true);
@@ -373,6 +386,13 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     switch(node->nodeType) {
         case GEOMETRY: break;
         case POINT_LIGHT:
+            for(int i = 0; i < numLights; i++) {
+                GLint locationLightPosition = shader->getUniformFromName(fmt::format("sources[{}].lightPosition", i));
+                glUniform3fv(locationLightPosition, 1, glm::value_ptr(lightSources[i].lightPosition));
+
+                GLint locationLightColour = shader->getUniformFromName(fmt::format("sources[{}].colour", i));
+                glUniform3fv(locationLightColour, 1, glm::value_ptr(lightSources[i].colour));
+            }
             lightSources[node->vertexArrayObjectID].lightPosition = glm::vec3(node->currentTransformationMatrix * glm::vec4(0, 0, 0, 1));
             break;
         case SPOT_LIGHT: break;
@@ -397,15 +417,7 @@ void renderNode(SceneNode* node) {
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
             break;
-        case POINT_LIGHT:
-            for(int i = 0; i < numLights; i++) {
-                GLint locationLightPosition = shader->getUniformFromName(fmt::format("sources[{}].lightPosition", i));
-                glUniform3fv(locationLightPosition, 1, glm::value_ptr(lightSources[i].lightPosition));
-
-                GLint locationLightColour = shader->getUniformFromName(fmt::format("sources[{}].colour", i));
-                glUniform3fv(locationLightColour, 1, glm::value_ptr(lightSources[i].colour));
-            }
-            break;
+        case POINT_LIGHT: break;
         case SPOT_LIGHT: break;
     }
     for(SceneNode* child : node->children) {
