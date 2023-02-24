@@ -105,7 +105,7 @@ unsigned int getTextureID(PNGImage *image) {
     unsigned int textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width, image->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->pixels.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->width, image->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->pixels.data());
     glGenerateMipmap(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -178,7 +178,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     // Text
     PNGImage charmap = loadPNGFile("../res/textures/charmap.png");
-    std::string text = "Testing, testing: 1 2 3";
+    std::string text = "Testing, testing, 1, 2, 3";
     Mesh textMesh = generateTextGeometryBuffer(text, 39.0/29.0, text.length() * 29.0);
 
     unsigned int textureID = getTextureID(&charmap);
@@ -445,7 +445,7 @@ void renderNode(SceneNode* node) {
             text2DShader->activate();
             if(node->vertexArrayObjectID != -1) {
                 glm::mat4 ortho = glm::ortho(0.0f, float(windowWidth), 0.0f, float(windowHeight));
-                glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(ortho));
+                glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(ortho));
                 glBindTextureUnit(0, node->textureID);
                 glBindVertexArray(node->vertexArrayObjectID);
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);

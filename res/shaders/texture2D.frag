@@ -4,9 +4,9 @@ in vec2 textureCoordinates;
 
 uniform layout(binding = 0) sampler2D textureIn;
 
-out vec4 outColour;
+out vec4 color;
 
 void main()
 {
-    outColour = texture(textureIn, textureCoordinates);
+    color = texture(textureIn, textureCoordinates) * vec4(1, 0, 0, 1);
 }

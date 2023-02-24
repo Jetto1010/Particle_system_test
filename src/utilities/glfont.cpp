@@ -18,7 +18,7 @@ Mesh generateTextGeometryBuffer(std::string text, float characterHeightOverWidth
     for(unsigned int i = 0; i < text.length(); i++)
     {
         float baseXCoordinate = float(i) * characterWidth;
-        float baseXText = stride * float(text.at(i));
+        float baseXText = stride * float(text[i]);
 
         mesh.vertices.at(4 * i + 0) = {baseXCoordinate, 0, 0};
         mesh.vertices.at(4 * i + 1) = {baseXCoordinate + characterWidth, 0, 0};

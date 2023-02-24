@@ -1,13 +1,13 @@
 #version 430 core
 
-in layout (location = 0) vec3 posistion;
-in layout (location = 1) vec2 textureCoordinates;
-uniform layout (location = 2) mat4 ortho;
+in layout (location = 0) vec3 position;
+in layout (location = 2) vec2 inTextureCoordinates;
+uniform layout (location = 3) mat4 ortho;
 
-out vec2 outTextureCoordinates;
+out vec2 textureCoordinates;
 
 void main()
 {
-    outTextureCoordinates = textureCoordinates;
-    gl_Position = ortho * vec4(posistion, 1.0);
+    textureCoordinates = inTextureCoordinates;
+    gl_Position = ortho * vec4(position, 1.0);
 }
