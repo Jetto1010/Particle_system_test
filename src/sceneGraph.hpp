@@ -14,7 +14,7 @@
 #include <fstream>
 
 enum SceneNodeType {
-	GEOMETRY, POINT_LIGHT, SPOT_LIGHT
+	GEOMETRY, POINT_LIGHT, SPOT_LIGHT, TWO_D_GEOMETRY, NORMAL_MAPPED_GEOMETRY
 };
 
 struct SceneNode {
@@ -54,6 +54,9 @@ struct SceneNode {
 
 	// Node type is used to determine how to handle the contents of a node
 	SceneNodeType nodeType;
+
+    unsigned int textureID;
+    unsigned int normalMappedTextureID;
 };
 
 SceneNode* createSceneNode();

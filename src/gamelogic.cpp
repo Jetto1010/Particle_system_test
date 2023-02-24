@@ -43,6 +43,7 @@ double ballRadius = 3.0f;
 // These are heap allocated, because they should not be initialised at the start of the program
 sf::SoundBuffer* buffer;
 Gloom::Shader* shader;
+Gloom::Shader* text2DShader;
 sf::Sound* sound;
 
 const glm::vec3 boxDimensions(180, 90, 90);
@@ -97,18 +98,18 @@ struct LightSource {
 };
 int const numLights = 3;
 LightSource lightSources[numLights];
-
+SceneNode* textNode;
 glm::mat4 VP;
 
 unsigned int getTextureID(PNGImage *image) {
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image->width, image->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->pixels.data());
     glGenerateMipmap(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    return texture;
+    return textureID;
 }
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
@@ -124,9 +125,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     shader = new Gloom::Shader();
     shader->makeBasicShader("../res/shaders/simple.vert", "../res/shaders/simple.frag");
-    shader->activate();
 
-    PNGImage charmap = loadPNGFile("../res/textures/charmap.png");
+    text2DShader = new Gloom::Shader();
+    text2DShader->makeBasicShader("../res/shaders/texture2D.vert", "../res/shaders/texture2D.frag");
 
     // Create meshes
     Mesh pad = cube(padDimensions, glm::vec2(30, 40), true);
@@ -174,6 +175,22 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->children.push_back(lightSources[0].lightNode);
     ballNode->children.push_back(lightSources[1].lightNode);
     ballNode->children.push_back(lightSources[2].lightNode);
+
+    // Text
+    PNGImage charmap = loadPNGFile("../res/textures/charmap.png");
+    std::string text = "Testing, testing: 1 2 3";
+    Mesh textMesh = generateTextGeometryBuffer(text, 39.0/29.0, text.length() * 29.0);
+
+    unsigned int textureID = getTextureID(&charmap);
+    unsigned int textVAO  = generateBuffer(textMesh);
+
+    textNode = createSceneNode();
+    textNode->vertexArrayObjectID = textVAO;
+    textNode->VAOIndexCount = textMesh.indices.size();
+    textNode->nodeType = TWO_D_GEOMETRY;
+    textNode->position = glm::vec3(0, 0, 0);
+    textNode->textureID = textureID;
+    rootNode->children.push_back(textNode);
 
 
     getTimeDeltaSeconds();
@@ -386,16 +403,10 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     switch(node->nodeType) {
         case GEOMETRY: break;
         case POINT_LIGHT:
-            for(int i = 0; i < numLights; i++) {
-                GLint locationLightPosition = shader->getUniformFromName(fmt::format("sources[{}].lightPosition", i));
-                glUniform3fv(locationLightPosition, 1, glm::value_ptr(lightSources[i].lightPosition));
-
-                GLint locationLightColour = shader->getUniformFromName(fmt::format("sources[{}].colour", i));
-                glUniform3fv(locationLightColour, 1, glm::value_ptr(lightSources[i].colour));
-            }
             lightSources[node->vertexArrayObjectID].lightPosition = glm::vec3(node->currentTransformationMatrix * glm::vec4(0, 0, 0, 1));
-            break;
         case SPOT_LIGHT: break;
+        case TWO_D_GEOMETRY: break;
+        case NORMAL_MAPPED_GEOMETRY: break;
     }
 
     for(SceneNode* child : node->children) {
@@ -404,11 +415,15 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 }
 
 void renderNode(SceneNode* node) {
-    glm::mat3 normalMat = glm::transpose(glm::inverse(node->currentTransformationMatrix));
+    if (node->nodeType != TWO_D_GEOMETRY) {
+        shader->activate();
 
-    glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
-    glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->MVP));
-    glUniformMatrix3fv(5, 1, GL_FALSE, glm::value_ptr(normalMat));
+        glm::mat3 normalMat = glm::transpose(glm::inverse(node->currentTransformationMatrix));
+
+        glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+        glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->MVP));
+        glUniformMatrix3fv(5, 1, GL_FALSE, glm::value_ptr(normalMat));
+    }
 
     switch(node->nodeType) {
         case GEOMETRY:
@@ -417,8 +432,25 @@ void renderNode(SceneNode* node) {
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
             break;
-        case POINT_LIGHT: break;
+        case POINT_LIGHT:
+            for(int i = 0; i < numLights; i++) {
+                GLint locationLightPosition = shader->getUniformFromName(fmt::format("sources[{}].lightPosition", i));
+                glUniform3fv(locationLightPosition, 1, glm::value_ptr(lightSources[i].lightPosition));
+
+                GLint locationLightColour = shader->getUniformFromName(fmt::format("sources[{}].colour", i));
+                glUniform3fv(locationLightColour, 1, glm::value_ptr(lightSources[i].colour));
+            }
         case SPOT_LIGHT: break;
+        case TWO_D_GEOMETRY:
+            text2DShader->activate();
+            if(node->vertexArrayObjectID != -1) {
+                glm::mat4 ortho = glm::ortho(0.0f, float(windowWidth), 0.0f, float(windowHeight));
+                glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(ortho));
+                glBindTextureUnit(0, node->textureID);
+                glBindVertexArray(node->vertexArrayObjectID);
+                glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+            }
+        case NORMAL_MAPPED_GEOMETRY: break;
     }
     for(SceneNode* child : node->children) {
         renderNode(child);
