@@ -96,7 +96,7 @@ struct LightSource {
     glm::vec3 lightPosition;
     glm::vec3 colour;
 };
-int const numLights = 3;
+int const numLights = 1;
 LightSource lightSources[numLights];
 SceneNode* textNode;
 glm::mat4 VP;
@@ -129,68 +129,70 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     text2DShader = new Gloom::Shader();
     text2DShader->makeBasicShader("../res/shaders/texture2D.vert", "../res/shaders/texture2D.frag");
 
+    // Text
+    PNGImage charmap = loadPNGFile("../res/textures/charmap.png");
+    unsigned int textureID = getTextureID(&charmap);
+    std::string textString = "Testing, testing, 1, 2, 3";
+
+    // Wall texture
+    PNGImage wallImage = loadPNGFile("../res/textures/Brick03_col.png");
+    unsigned int wallImageID = getTextureID(&wallImage);
+
+    PNGImage wallImageNM = loadPNGFile("../res/textures/Brick03_nrm.png");
+    unsigned int wallImageNMID = getTextureID(&wallImageNM);
+
     // Create meshes
     Mesh pad = cube(padDimensions, glm::vec2(30, 40), true);
     Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
     Mesh sphere = generateSphere(1.0, 40, 40);
+    Mesh text = generateTextGeometryBuffer(textString, 39.0/29.0, textString.length() * 29.0);
 
     // Fill buffers
     unsigned int ballVAO = generateBuffer(sphere);
     unsigned int boxVAO  = generateBuffer(box);
     unsigned int padVAO  = generateBuffer(pad);
+    unsigned int textVAO = generateBuffer(text);
 
     // Construct scene
     rootNode = createSceneNode();
     boxNode  = createSceneNode();
     padNode  = createSceneNode();
     ballNode = createSceneNode();
+    textNode = createSceneNode();
 
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(padNode);
     rootNode->children.push_back(ballNode);
+    rootNode->children.push_back(textNode);
 
-    boxNode->vertexArrayObjectID  = boxVAO;
-    boxNode->VAOIndexCount        = box.indices.size();
+    boxNode->vertexArrayObjectID   = boxVAO;
+    boxNode->VAOIndexCount         = box.indices.size();
+    boxNode->nodeType              = NORMAL_MAPPED_GEOMETRY;
+    boxNode->textureID             = wallImageID;
+    boxNode->normalMappedTextureID = wallImageNMID;
 
-    padNode->vertexArrayObjectID  = padVAO;
-    padNode->VAOIndexCount        = pad.indices.size();
+    padNode->vertexArrayObjectID   = padVAO;
+    padNode->VAOIndexCount         = pad.indices.size();
 
-    ballNode->vertexArrayObjectID = ballVAO;
-    ballNode->VAOIndexCount       = sphere.indices.size();
+    ballNode->vertexArrayObjectID  = ballVAO;
+    ballNode->VAOIndexCount        = sphere.indices.size();
 
+    textNode->vertexArrayObjectID  = textVAO;
+    textNode->VAOIndexCount        = text.indices.size();
+    textNode->nodeType             = TWO_D_GEOMETRY;
+    textNode->position             = glm::vec3(0, 0, 0);
+    textNode->textureID            = textureID;
+
+    // Lights
     for(int i = 0; i < numLights; i ++){
         lightSources[i].lightNode = createSceneNode();
         lightSources[i].lightNode->nodeType = POINT_LIGHT;
         lightSources[i].lightNode->vertexArrayObjectID = i;
     }
 
-    lightSources[0].colour = glm::vec3(1,0,0);
-    lightSources[1].colour = glm::vec3(0,1,0);
-    lightSources[2].colour = glm::vec3(0,0,1);
-
+    lightSources[0].colour = glm::vec3(1,1,1);
     lightSources[0].lightNode->position = glm::vec3(3, 3, 3);
-    lightSources[1].lightNode->position = glm::vec3(2, 2, 2);
-    lightSources[2].lightNode->position = glm::vec3(1, 1, 1);
-
     ballNode->children.push_back(lightSources[0].lightNode);
-    ballNode->children.push_back(lightSources[1].lightNode);
-    ballNode->children.push_back(lightSources[2].lightNode);
-
-    // Text
-    PNGImage charmap = loadPNGFile("../res/textures/charmap.png");
-    std::string text = "Testing, testing, 1, 2, 3";
-    Mesh textMesh = generateTextGeometryBuffer(text, 39.0/29.0, text.length() * 29.0);
-
-    unsigned int textureID = getTextureID(&charmap);
-    unsigned int textVAO  = generateBuffer(textMesh);
-
-    textNode = createSceneNode();
-    textNode->vertexArrayObjectID = textVAO;
-    textNode->VAOIndexCount = textMesh.indices.size();
-    textNode->nodeType = TWO_D_GEOMETRY;
-    textNode->position = glm::vec3(0, 0, 0);
-    textNode->textureID = textureID;
-    rootNode->children.push_back(textNode);
 
 
     getTimeDeltaSeconds();
@@ -381,6 +383,7 @@ void updateFrame(GLFWwindow* window) {
         boxNode->position.z - (boxDimensions.z/2) + (padDimensions.z/2) + (1 - padPositionZ) * (boxDimensions.z - padDimensions.z)
     };
 
+    shader->activate();
     glUniform3fv(9, 1, glm::value_ptr(cameraPosition));
     glUniform3fv(10, 1, glm::value_ptr(ballPosition));
 
@@ -423,6 +426,14 @@ void renderNode(SceneNode* node) {
         glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
         glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->MVP));
         glUniformMatrix3fv(5, 1, GL_FALSE, glm::value_ptr(normalMat));
+
+        if (node->nodeType == NORMAL_MAPPED_GEOMETRY) {
+            glUniform1i(11, GL_TRUE);
+            glUniform1i(12, GL_TRUE);
+        } else {
+            glUniform1i(11, GL_FALSE);
+            glUniform1i(12, GL_FALSE);
+        }
     }
 
     switch(node->nodeType) {
@@ -450,7 +461,14 @@ void renderNode(SceneNode* node) {
                 glBindVertexArray(node->vertexArrayObjectID);
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
-        case NORMAL_MAPPED_GEOMETRY: break;
+        case NORMAL_MAPPED_GEOMETRY:
+            if(node->vertexArrayObjectID != -1) {
+                glBindTextureUnit(0, node->textureID);
+                glBindTextureUnit(1, node->normalMappedTextureID);
+                glBindVertexArray(node->vertexArrayObjectID);
+                glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+            }
+            break;
     }
     for(SceneNode* child : node->children) {
         renderNode(child);

@@ -5,22 +5,28 @@ struct LightSource {
     vec3 colour;
 };
 
-const int numLights = 3;
+const int numLights = 1;
 const float la = 0.001;
 const float lb = 0.001;
 const float lc = 0.001;
 const float radius = 3;
-const float ambient = 0.2;
-const float strengthDiffuse = 0.4;
-const float strengthSpecular = 0.5;
+const float ambient = 0.1;
+const float strengthDiffuse = 0.8;
+const float strengthSpecular = 0.2;
 
 in layout(location = 0) vec3 normal;
 in layout(location = 1) vec2 textureCoordinates;
 in layout(location = 2) vec3 fragPos;
+in layout(location = 3) mat3 TBN;
 
 uniform LightSource sources[numLights];
 uniform layout(location = 9) vec3 camera;
 uniform layout(location = 10) vec3 ball;
+uniform layout(location = 11) bool hasTexture;
+uniform layout(location = 12) bool hasNormalMap;
+
+uniform layout(binding = 0) sampler2D textureIn;
+uniform layout(binding = 1) sampler2D normalMapIn;
 
 out vec4 color;
 
@@ -33,6 +39,14 @@ void main()
     vec3 diff = vec3(0);
     vec3 spec = vec3(0);
     vec3 normalizedNormal = normalize(normal);
+    vec3 textureSample = vec3(1);
+
+    if (hasTexture) {
+         textureSample = vec3(texture(textureIn, textureCoordinates));
+    }
+    if (hasNormalMap) {
+        normalizedNormal = TBN * (vec3(texture(normalMapIn, textureCoordinates)) * 2 - 1);
+    }
 
     for (int i = 0; i < numLights; i++) {
         LightSource source = sources[i];
@@ -50,7 +64,7 @@ void main()
 
         float d = length(source.lightPosition - fragPos);
         float attenuation = 1 / (la + d * lb + d * d * lc);
-        diff += max(dot(normalizedNormal, lightDirection), 0) * attenuation * source.colour;
+        diff += max(dot(normalizedNormal, lightDirection), 0) * attenuation * source.colour * textureSample;
         spec += pow(max(dot(viewDirection, reflectDirection), 0), 100) * attenuation * source.colour;
     }
 
