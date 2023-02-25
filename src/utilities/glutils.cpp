@@ -3,6 +3,7 @@
 #include "glutils.h"
 #include <vector>
 
+// From http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-13-normal-mapping/
 void computeTangentBasis(
         // inputs
         std::vector<glm::vec3>& vertices,
