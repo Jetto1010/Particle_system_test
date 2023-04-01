@@ -32,6 +32,7 @@ namespace Gloom
         /* Getter for the view matrix */
         glm::mat4 getViewMatrix() { return matView; }
 
+        glm::vec3 getPos() { return cPosition; }
 
         /* Handle keyboard inputs from a callback mechanism */
         void handleKeyboardInputs(int key, int action)
@@ -71,10 +72,6 @@ namespace Gloom
         /* Handle cursor position from a callback mechanism */
         void handleCursorPosInput(double xpos, double ypos)
         {
-            // Do nothing if the left mouse button is not pressed
-            if (isMousePressed == false)
-                return;
-
             // There should be no movement when the mouse button is released
             if (resetMouse)
             {

@@ -21,7 +21,6 @@ in layout(location = 3) mat3 TBN;
 
 uniform LightSource sources[numLights];
 uniform layout(location = 9) vec3 camera;
-uniform layout(location = 10) vec3 ball;
 uniform layout(location = 11) bool hasTexture;
 uniform layout(location = 12) bool hasNormalMap;
 
@@ -51,12 +50,12 @@ void main()
     for (int i = 0; i < numLights; i++) {
         LightSource source = sources[i];
 
-        vec3 fragmentBallVector = ball - fragPos;
+        /*vec3 fragmentBallVector = ball - fragPos;
         vec3 fragmentLightVector = source.lightPosition - fragPos;
         vec3 rejection = reject(fragmentBallVector, fragmentLightVector);
         if (!(length(fragmentLightVector) < length(fragmentBallVector)|| dot(fragmentBallVector, fragmentLightVector) < 0 || length(rejection) > radius)) {
             continue; // Skips rest of calcualtions
-        }
+        }*/
 
         vec3 lightDirection = normalize(source.lightPosition- fragPos);
         vec3 viewDirection = normalize(camera - fragPos);
