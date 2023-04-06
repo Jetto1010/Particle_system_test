@@ -13,8 +13,10 @@
 #include <chrono>
 #include <fstream>
 
+#include "particleSystem.hpp"
+
 enum SceneNodeType {
-	GEOMETRY, POINT_LIGHT, SPOT_LIGHT, TWO_D_GEOMETRY, NORMAL_MAPPED_GEOMETRY
+	GEOMETRY, POINT_LIGHT, TWO_D_GEOMETRY, NORMAL_MAPPED_GEOMETRY, PARTICLE, SKYBOX
 };
 
 struct SceneNode {
@@ -28,7 +30,6 @@ struct SceneNode {
         VAOIndexCount = 0;
 
         nodeType = GEOMETRY;
-
 	}
 
 	// A list of all children that belong to this node.
@@ -42,7 +43,6 @@ struct SceneNode {
 
 	// A transformation matrix representing the transformation of the node's location relative to its parent. This matrix is updated every frame.
 	glm::mat4 currentTransformationMatrix;
-
     glm::mat4 MVP;
 
 	// The location of the node's reference point
@@ -57,6 +57,9 @@ struct SceneNode {
 
     unsigned int textureID;
     unsigned int normalMappedTextureID;
+
+    // Node is particle system
+    ParticleSystem particleSystem;
 };
 
 SceneNode* createSceneNode();
