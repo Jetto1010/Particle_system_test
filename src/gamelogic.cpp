@@ -105,25 +105,25 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     };
 
     // Create meshes
-    Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
     Mesh skybox = cube(glm::vec3(360), glm::vec2(90), true, true);
+    Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
     Mesh text = generateTextGeometryBuffer(textString, 39.0/29.0, textString.length() * 29.0);
     Mesh particleSphere = generateSphere(0.01, 10, 10);
 
     // Fill buffers
-    unsigned int boxVAO  = generateBuffer(box);
     unsigned int skyVAO  = generateBuffer(skybox);
+    unsigned int boxVAO  = generateBuffer(box);
     unsigned int textVAO = generateBuffer(text);
     unsigned int particleVAO = generateBuffer(particleSphere);
 
     // Construct scene
     rootNode = createSceneNode();
-    boxNode  = createSceneNode();
     skyNode  = createSceneNode();
+    boxNode  = createSceneNode();
     textNode = createSceneNode();
     particleNode = createSceneNode();
 
-    //rootNode->children.push_back(skyNode);
+    rootNode->children.push_back(skyNode);
     rootNode->children.push_back(boxNode);
     rootNode->children.push_back(textNode);
 
