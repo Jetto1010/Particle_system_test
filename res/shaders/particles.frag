@@ -8,5 +8,5 @@ uniform layout(binding = 0) sampler2D textureIn;
 
 void main()
 {
-    color = texture(textureIn, textureCoordinates) * particleColor;
+    color = texture(textureIn, textureCoordinates);
 }

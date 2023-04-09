@@ -1,7 +1,3 @@
-//
-// Created by Joerund on 03.04.2023.
-//
-
 #include "particleSystem.hpp"
 
 ParticleSystem::ParticleSystem(unsigned int nrParticles) : nrParticles(nrParticles){
