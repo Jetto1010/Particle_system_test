@@ -1,4 +1,5 @@
 #include <iostream>
+#include <glm/vec3.hpp>
 #include "shapes.h"
 
 #ifndef M_PI
@@ -203,5 +204,45 @@ Mesh generateSphere(float sphereRadius, int slices, int layers) {
     mesh.normals = normals;
     mesh.indices = indices;
     mesh.textureCoordinates = uvs;
+    return mesh;
+}
+
+Mesh generateParticle() {
+    std::vector<glm::vec3> vert = {
+            glm::vec3(0.0f, 0.0f, -30.0f),
+            glm::vec3(0.0f, 1.0f, -30.0f),
+            glm::vec3(1.0f, 0.0f, -30.0f),
+            glm::vec3(1.0f, 1.0f, -30.0f)
+    };
+
+    std::vector<glm::vec3> normal = {
+            glm::vec3(0.0f, 0.0f, 0.0f)
+    };
+
+    std::vector<glm::vec2> tex = {
+            glm::vec2(0.0f, 1.0f),
+            glm::vec2(0.0f, 0.0f),
+            glm::vec2(1.0f, 1.0f),
+            glm::vec2(1.0f, 0.0f)
+    };
+
+    std::vector<unsigned int> ind = {
+        0, 1, 2,  1, 3, 2
+    };
+
+    Mesh mesh;
+    for (auto & i : vert) {
+        mesh.vertices.emplace_back(i);
+    }
+    for (auto & i : normal) {
+        mesh.normals.emplace_back(i);
+    }
+    for (auto & i : tex) {
+        mesh.textureCoordinates.emplace_back(i);
+    }
+    for (auto & i : ind) {
+        mesh.indices.emplace_back(i);
+    }
+
     return mesh;
 }

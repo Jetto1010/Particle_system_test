@@ -114,11 +114,16 @@ namespace Gloom
             if (keysInUse[GLFW_KEY_D])  // right
                 fMovement += dirX;
 
-            if (keysInUse[GLFW_KEY_E])  // vertical up
+            if (keysInUse[GLFW_KEY_SPACE])  // vertical up
                 fMovement += dirY;
 
-            if (keysInUse[GLFW_KEY_Q])  // vertical down
+            if (keysInUse[GLFW_KEY_LEFT_CONTROL])  // vertical down
                 fMovement -= dirY;
+
+            if (keysInUse[GLFW_KEY_LEFT_SHIFT])
+                cMovementSpeed = 50;
+            else
+                cMovementSpeed = 5;
 
             // Trick to balance PC speed with movement
             GLfloat velocity = cMovementSpeed * deltaTime;

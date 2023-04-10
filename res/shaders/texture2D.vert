@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 
 in layout (location = 0) vec3 position;
 in layout (location = 2) vec2 inTextureCoordinates;
