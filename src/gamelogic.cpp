@@ -75,10 +75,6 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     skyBoxShader = new Gloom::Shader();
     skyBoxShader->makeBasicShader("../res/shaders/skybox.vert", "../res/shaders/skybox.frag");
 
-    // Particle
-    PNGImage particleTex = loadPNGFile("../res/textures/fire.png");
-    unsigned int particleTexID = getTextureID(&particleTex);
-
     // Skybox texture
     std::vector<std::string> skyboxImages{
             "../res/textures/skybox/right.png",
@@ -91,7 +87,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     // Create meshes
     Mesh skybox = cube(glm::vec3(360), glm::vec2(90), true, true);
-    Mesh particle = generateParticle();
+    Mesh particle = generateSphere(1.0f, 10, 10);
+    // Mesh particle = cube(glm::vec3(1.0f), glm::vec2(90), false, false);
+    // Mesh particle = generateParticle();
 
     // Fill buffers
     unsigned int skyVAO  = generateBuffer(skybox);
@@ -102,67 +100,21 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     skyNode  = createSceneNode();
     particleNode = createSceneNode();
 
+    // Skyvox
     skyNode->vertexArrayObjectID   = skyVAO;
     skyNode->VAOIndexCount         = skybox.indices.size();
     skyNode->nodeType              = SKYBOX;
-    skyNode->position              = glm::vec3(0, 0, 0);
     skyNode->textureID             = getCubeMapID(skyboxImages);
     rootNode->children.push_back(skyNode);
 
-    // Particles
-   /* particleNode->nodeType = PARTICLE;
-    particleNode->vertexArrayObjectID = particleVAO;
-    particleNode->particleSystem = ParticleSystem(500);
-    particleNode->VAOIndexCount = particle.indices.size();
-    particleNode->position = glm::vec3(10);
-    skyNode->children.push_back(particleNode);*/
-
-    /*glm::vec3 vert[4] = {
-            glm::vec3(0.0f, 0.0f,  0.0f),
-            glm::vec3(0.0f, 1.0f,  0.0f),
-            glm::vec3(1.0f, 0.0f, 0.0f),
-            glm::vec3(1.0f, 1.0f, 0.0f)
-    };
-
-    glm::vec2 tex[4] = {
-            glm::vec2(0.0f, 1.0f),
-            glm::vec2(0.0f, 0.0f),
-            glm::vec2(1.0f, 1.0f),
-            glm::vec2(1.0f, 0.0f)
-    };
-
-
-    unsigned int  posVBO;
-    unsigned int  texVBO;
-    unsigned int  particleVAO;
-
-    glGenVertexArrays(1, &particleVAO);
-
-    glBindVertexArray(particleVAO);
-
-    glGenBuffers(1, &posVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, posVBO);
-
-    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(glm::vec3), vert, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(0);
-
-    glGenBuffers(1, &texVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, texVBO);
-
-    glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(glm::vec2), tex, GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);*/
-
+    // Particle
     particleNode->nodeType = PARTICLE;
     particleNode->vertexArrayObjectID = particleVAO;
-    particleNode->particleSystem = ParticleSystem(1000);
-    particleNode->textureID = particleTexID;
+    particleNode->particleSystem = ParticleSystem(14000, 100);
+    // particleNode->textureID = particleTexID;
     particleNode->position = glm::vec3(0,0,-30);
     particleNode->VAOIndexCount = particle.indices.size();
-    skyNode->children.push_back(particleNode);
+    rootNode->children.push_back(particleNode);
 
 
     getTimeDeltaSeconds();
@@ -173,18 +125,18 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 void updateFrame(GLFWwindow* window) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    double timeDelta = getTimeDeltaSeconds();
+    double deltaTime = getTimeDeltaSeconds();
 
-    camera.updateCamera(timeDelta);
+    camera.updateCamera(deltaTime);
 
     glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 400.0f);
     glm::mat4 view = camera.getViewMatrix();
     VP = projection * view;
 
-    updateNodeTransformations(rootNode, glm::mat4(1));
+    updateNodeTransformations(rootNode, glm::mat4(1.0f), deltaTime);
 }
 
-void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar) {
+void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar, double deltaTime) {
     glm::mat4 transformationMatrix =
               glm::translate(node->position)
             * glm::translate(node->referencePoint)
@@ -202,13 +154,16 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
             lightSources[node->vertexArrayObjectID].lightPosition = glm::vec3(node->currentTransformationMatrix * glm::vec4(0, 0, 0, 1));
             break;
         case PARTICLE:
-            particleNode->particleSystem.update(getTimeDeltaSeconds(), node->position, glm::vec3(0.0));
+            node->particleSystem.update(deltaTime, node->position, camera.getPos());
+            break;
+        case SKYBOX:
+            node->position = camera.getPos();
             break;
         default: break;
     }
 
     for(SceneNode* child : node->children) {
-        updateNodeTransformations(child, node->currentTransformationMatrix);
+        updateNodeTransformations(child, node->currentTransformationMatrix, deltaTime);
     }
 }
 
@@ -265,29 +220,15 @@ void renderNode(SceneNode* node) {
             break;
         case PARTICLE:
             if (node->vertexArrayObjectID != -1) {
-                /*particleShader->activate();
-                glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(node->MVP));
-                for (Particle particle : node->particleSystem.particles) {
-                    if (particle.lifeTime > 0.0f) {
-                        // glUniform3fv(1, 1, glm::value_ptr(particle.position));
-                        //
-                        glBindTextureUnit(GL_TEXTURE_2D, node->textureID);
-                        glBindVertexArray(node->vertexArrayObjectID);
-                        glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
-
-                    }
-                }
-                glBindVertexArray(0);
-                glBindTexture(GL_TEXTURE_2D, 0);*/
                 particleShader->activate();
                 glBindVertexArray(node->vertexArrayObjectID);
-                glBindTexture(GL_TEXTURE_2D, node->textureID);
+                // glBindTexture(GL_TEXTURE_2D, node->textureID);
                 glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(VP));
                 for (Particle particle : node->particleSystem.particles) {
                     if (particle.lifeTime > 0.0f) {
-                        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
                         glUniform3fv(1, 1, glm::value_ptr(particle.position));
-                        // glUniform3fv(2, 1, glm::value_ptr(particle.color));
+                        glUniform4fv(2, 1, glm::value_ptr(particle.colour));
+                        glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
                     }
                 }
             }
@@ -297,6 +238,7 @@ void renderNode(SceneNode* node) {
                 skyBoxShader->activate();
                 glDepthMask(GL_FALSE);
                 glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(VP));
+                glUniform3fv(1, 1, glm::value_ptr(node->position));
                 glBindTexture(GL_TEXTURE_CUBE_MAP, node->textureID);
                 glBindVertexArray(node->vertexArrayObjectID);
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);

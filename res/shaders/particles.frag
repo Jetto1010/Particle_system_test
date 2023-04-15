@@ -8,5 +8,5 @@ uniform sampler2D textureIn;
 
 void main()
 {
-    color = vec4(1,0,0,1);
+    color = particleColor;
 }
