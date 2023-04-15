@@ -18,7 +18,6 @@
 #include <glm/gtx/transform.hpp>
 
 #include "utilities/imageLoader.hpp"
-#include "utilities/glfont.h"
 #include "utilities/camera.hpp"
 #include "utilities/texture.h"
 
@@ -29,12 +28,13 @@ enum KeyFrameAction {
 SceneNode* rootNode;
 SceneNode* skyNode;
 SceneNode* particleNode;
+SceneNode* islandNode;
 
 // These are heap allocated, because they should not be initialised at the start of the program
 Gloom::Shader* shader;
-Gloom::Shader* text2DShader;
 Gloom::Shader* particleShader;
 Gloom::Shader* skyBoxShader;
+Gloom::Shader* objectShader;
 
 CommandLineOptions options;
 
@@ -66,14 +66,14 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     shader = new Gloom::Shader();
     shader->makeBasicShader("../res/shaders/simple.vert", "../res/shaders/simple.frag");
 
-    text2DShader = new Gloom::Shader();
-    text2DShader->makeBasicShader("../res/shaders/texture2D.vert", "../res/shaders/texture2D.frag");
-
     particleShader = new Gloom::Shader();
     particleShader->makeBasicShader("../res/shaders/particles.vert", "../res/shaders/particles.frag");
 
     skyBoxShader = new Gloom::Shader();
     skyBoxShader->makeBasicShader("../res/shaders/skybox.vert", "../res/shaders/skybox.frag");
+
+    objectShader = new Gloom::Shader();
+    objectShader->makeBasicShader("../res/shaders/object.vert", "../res/shaders/object.frag");
 
     // Skybox texture
     std::vector<std::string> skyboxImages{
@@ -85,20 +85,26 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
             "../res/textures/skybox/back.png"
     };
 
+    // Island texture
+    PNGImage islandTex = loadPNGFile("../res/textures/island.png");
+
     // Create meshes
     Mesh skybox = cube(glm::vec3(360), glm::vec2(90), true, true);
     Mesh particle = generateSphere(1.0f, 10, 10);
     // Mesh particle = cube(glm::vec3(1.0f), glm::vec2(90), false, false);
     // Mesh particle = generateParticle();
+    Mesh island = Mesh("../res/objects/island.obj");
 
     // Fill buffers
     unsigned int skyVAO  = generateBuffer(skybox);
     unsigned int particleVAO = generateBuffer(particle);
+    unsigned int islandVAO = generateBuffer(island);
 
     // Construct scene
     rootNode = createSceneNode();
     skyNode  = createSceneNode();
     particleNode = createSceneNode();
+    islandNode = createSceneNode();
 
     // Skyvox
     skyNode->vertexArrayObjectID   = skyVAO;
@@ -115,6 +121,13 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     particleNode->position = glm::vec3(0,0,-30);
     particleNode->VAOIndexCount = particle.indices.size();
     rootNode->children.push_back(particleNode);
+
+    // Island
+    islandNode->nodeType = GEOMETRY;
+    islandNode->vertexArrayObjectID = islandVAO;
+    islandNode->VAOIndexCount = island.indices.size();
+    islandNode->textureID = getTextureID(&islandTex);
+    islandNode->position = glm::vec3(0, -4, 0);
 
 
     getTimeDeltaSeconds();
@@ -168,7 +181,7 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar,
 }
 
 void renderNode(SceneNode* node) {
-    if (node->nodeType == GEOMETRY || node->nodeType == POINT_LIGHT || node->nodeType == NORMAL_MAPPED_GEOMETRY) {
+    if (node->nodeType == POINT_LIGHT || node->nodeType == NORMAL_MAPPED_GEOMETRY) {
         shader->activate();
 
         glm::mat3 normalMat = glm::transpose(glm::inverse(node->currentTransformationMatrix));
@@ -188,7 +201,10 @@ void renderNode(SceneNode* node) {
 
     switch(node->nodeType) {
         case GEOMETRY:
+            objectShader->activate();
             if(node->vertexArrayObjectID != -1) {
+                glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(node->MVP));
+                glBindTexture(GL_TEXTURE_2D, node->textureID);
                 glBindVertexArray(node->vertexArrayObjectID);
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
@@ -200,15 +216,6 @@ void renderNode(SceneNode* node) {
 
                 GLint locationLightColour = shader->getUniformFromName(fmt::format("sources[{}].colour", i));
                 glUniform3fv(locationLightColour, 1, glm::value_ptr(lightSources[i].colour));
-            }
-            break;
-        case TWO_D_GEOMETRY:
-            if(node->vertexArrayObjectID != -1) {
-                text2DShader->activate();
-                glm::mat4 ortho = glm::ortho(0.0f, float(windowWidth), 0.0f, float(windowHeight));
-                glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(ortho));
-                glBindVertexArray(node->vertexArrayObjectID);
-                glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
             break;
         case NORMAL_MAPPED_GEOMETRY:

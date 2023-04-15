@@ -52,7 +52,7 @@ void ParticleSystem::spawnParticle(Particle &particle, glm::vec3 position) {
 void ParticleSystem::spawnParticle(Particle &particle, glm::vec3 position) {
     particle.lifeTime = 1.0f;
     particle.position = position;
-    particle.velocity = glm::vec3(randomNumber(-30.0f, 30.0f), randomNumber(-30.0f, 30.0f), randomNumber(-30.0f, 30.0f));
+    particle.velocity = glm::vec3(randomNumber(-30.0f, 30.0f), randomNumber(0, 30.0f), randomNumber(-30.0f, 30.0f));
     particle.acceleration = glm::vec3(0.0f, 0.3f, 0.0f);
     particle.colour = glm::vec4(1.0f, 1.0f, 0.4f, 1.0f);
 }
