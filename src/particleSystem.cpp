@@ -90,7 +90,12 @@ void ParticleSystem::update(float deltaTime, glm::vec3 position, glm::vec3 camer
             p.velocity += p.acceleration * deltaTime;
             p.distanceToCamera = glm::length(p.position - cameraPosition);
             float alpha = p.lifeTime / 2;
-            p.colour = glm::vec4(0.8,1-(p.position.y - 12)/3,0,1);
+            p.colour = glm::vec4(0.75,1-(p.position.y - 12)/3,0,0.8);
+            if (p.position.y > 17) {
+                p.colour = glm::vec4(0.5, 0.5, 0.5, 0.8);
+            }
+
+
         }
     }
 

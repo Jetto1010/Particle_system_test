@@ -9,5 +9,5 @@ out vec2 textureCoordinates;
 void main()
 {
     textureCoordinates = inTextureCoordinates;
-    gl_Position = MVP * vec4(position * 10.0, 1.0);
+    gl_Position = MVP * vec4(position * 5.0, 1.0);
 }

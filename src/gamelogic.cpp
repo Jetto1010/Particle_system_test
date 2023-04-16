@@ -75,18 +75,18 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     };
 
     // Island texture
-    PNGImage islandTex = loadPNGFile("../res/textures/island.png");
+    PNGImage islandTex = loadPNGFile("../res/textures/island2.png");
 
     // Create meshes
     Mesh skybox = cube(glm::vec3(360), glm::vec2(90), true, true);
-    Mesh particle = generateSphere(0.5f, 10, 10);
-    // Mesh particle = cube(glm::vec3(1.0f), glm::vec2(90), true, false);
-    // Mesh particle = generateParticle();
-    Mesh island = Mesh("../res/objects/island.obj");
+    Mesh particleCube = generateSphere(0.5f, 10, 10);
+    Mesh particleSphere = cube(glm::vec3(1.0f), glm::vec2(90), true, false);
+    Mesh island = Mesh("../res/objects/island2.obj");
 
     // Fill buffers
     unsigned int skyVAO  = generateBuffer(skybox);
-    unsigned int particleVAO = generateBuffer(particle);
+    unsigned int particleCubeVAO = generateBuffer(particleCube);
+    unsigned int particleSphereVAO = generateBuffer(particleSphere);
     unsigned int islandVAO = generateBuffer(island);
 
     // Construct scene
@@ -102,13 +102,14 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     skyNode->textureID             = getCubeMapID(skyboxImages);
     rootNode->children.push_back(skyNode);
 
-    // Particle
+    // Particles
     particleNode->nodeType = PARTICLE;
-    particleNode->vertexArrayObjectID = particleVAO;
+    particleNode->vertexArrayObjectID = particleSphereVAO;
+    particleNode->vertexArrayObjectID2 = particleCubeVAO;
     particleNode->particleSystem = ParticleSystem(18000, 100);
-    // particleNode->textureID = particleTexID;
-    particleNode->position = glm::vec3(0,13,0);
-    particleNode->VAOIndexCount = particle.indices.size();
+    particleNode->position = glm::vec3(-2.5,13,0);
+    particleNode->VAOIndexCount = particleSphere.indices.size();
+    particleNode->VAOIndexCount2 = particleCube.indices.size();
     islandNode->children.push_back(particleNode);
 
     // Island
@@ -180,14 +181,21 @@ void renderNode(SceneNode* node) {
         case PARTICLE:
             if (node->vertexArrayObjectID != -1) {
                 particleShader->activate();
-                glBindVertexArray(node->vertexArrayObjectID);
-                // glBindTexture(GL_TEXTURE_2D, node->textureID);
+                if (!camera.getParticleIsSphere()) {
+                    glBindVertexArray(node->vertexArrayObjectID);
+                } else {
+                    glBindVertexArray(node->vertexArrayObjectID2);
+                }
                 glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(node->MVP));
                 for (Particle particle : node->particleSystem.particles) {
                     if (particle.lifeTime > 0.0f) {
                         glUniform3fv(1, 1, glm::value_ptr(particle.position));
                         glUniform4fv(2, 1, glm::value_ptr(particle.colour));
-                        glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+                        if (!camera.getParticleIsSphere()) {
+                            glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+                        } else {
+                            glDrawElements(GL_TRIANGLES, node->VAOIndexCount2, GL_UNSIGNED_INT, nullptr);
+                        }
                     }
                 }
             }

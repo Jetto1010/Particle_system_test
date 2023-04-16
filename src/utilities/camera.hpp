@@ -34,6 +34,8 @@ namespace Gloom
 
         glm::vec3 getPos() { return cPosition; }
 
+        bool getParticleIsSphere() { return particleIsSphere; }
+
         /* Handle keyboard inputs from a callback mechanism */
         void handleKeyboardInputs(int key, int action)
         {
@@ -125,6 +127,12 @@ namespace Gloom
             else
                 cMovementSpeed = 5;
 
+            if (keysInUse[GLFW_KEY_1])
+                particleIsSphere = true;
+
+            if (keysInUse[GLFW_KEY_2])
+                particleIsSphere = false;
+
             // Trick to balance PC speed with movement
             GLfloat velocity = cMovementSpeed * deltaTime;
 
@@ -184,6 +192,7 @@ namespace Gloom
         // Variables used for bookkeeping
         GLboolean resetMouse     = true;
         GLboolean isMousePressed = false;
+        GLboolean particleIsSphere = true;
         GLboolean keysInUse[512];
 
         // Last cursor position

@@ -50,7 +50,9 @@ struct SceneNode {
 
 	// The ID of the VAO containing the "appearance" of this SceneNode.
 	int vertexArrayObjectID;
+	int vertexArrayObjectID2;
 	unsigned int VAOIndexCount;
+	unsigned int VAOIndexCount2;
 
 	// Node type is used to determine how to handle the contents of a node
 	SceneNodeType nodeType;
