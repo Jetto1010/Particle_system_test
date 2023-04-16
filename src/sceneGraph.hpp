@@ -16,7 +16,7 @@
 #include "particleSystem.hpp"
 
 enum SceneNodeType {
-	GEOMETRY, POINT_LIGHT, TWO_D_GEOMETRY, NORMAL_MAPPED_GEOMETRY, PARTICLE, SKYBOX
+	GEOMETRY, PARTICLE, SKYBOX
 };
 
 struct SceneNode {

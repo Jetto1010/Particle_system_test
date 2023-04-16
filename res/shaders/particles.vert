@@ -2,7 +2,7 @@
 in layout (location = 0) vec3 position;
 in layout (location = 2) vec2 inTextureCoordinates;
 
-uniform layout(location = 0) mat4 VP;
+uniform layout(location = 0) mat4 MVP;
 uniform layout(location = 1) vec3 offset;
 uniform layout(location = 2) vec4 color;
 
@@ -13,5 +13,5 @@ void main()
 {
     textureCoordinates = inTextureCoordinates;
     particleColor = color;
-    gl_Position = VP * vec4(position + offset, 1.0);
+    gl_Position = MVP * vec4(position + offset, 1.0);
 }

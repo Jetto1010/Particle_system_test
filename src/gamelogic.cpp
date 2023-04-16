@@ -31,20 +31,12 @@ SceneNode* particleNode;
 SceneNode* islandNode;
 
 // These are heap allocated, because they should not be initialised at the start of the program
-Gloom::Shader* shader;
 Gloom::Shader* particleShader;
 Gloom::Shader* skyBoxShader;
 Gloom::Shader* objectShader;
 
 CommandLineOptions options;
 
-struct LightSource {
-    SceneNode* lightNode;
-    glm::vec3 lightPosition;
-    glm::vec3 colour;
-};
-int const numLights = 1;
-LightSource lightSources[numLights];
 glm::mat4 VP;
 Gloom::Camera camera(glm::vec3(0, 0, 0));
 
@@ -62,9 +54,6 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     glfwSetCursorPosCallback(window, mouseCallback);
     glfwSetKeyCallback(window, keyCallback);
-
-    shader = new Gloom::Shader();
-    shader->makeBasicShader("../res/shaders/simple.vert", "../res/shaders/simple.frag");
 
     particleShader = new Gloom::Shader();
     particleShader->makeBasicShader("../res/shaders/particles.vert", "../res/shaders/particles.frag");
@@ -90,8 +79,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     // Create meshes
     Mesh skybox = cube(glm::vec3(360), glm::vec2(90), true, true);
-    Mesh particle = generateSphere(1.0f, 10, 10);
-    // Mesh particle = cube(glm::vec3(1.0f), glm::vec2(90), false, false);
+    Mesh particle = generateSphere(0.5f, 10, 10);
+    // Mesh particle = cube(glm::vec3(1.0f), glm::vec2(90), true, false);
     // Mesh particle = generateParticle();
     Mesh island = Mesh("../res/objects/island.obj");
 
@@ -116,19 +105,19 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     // Particle
     particleNode->nodeType = PARTICLE;
     particleNode->vertexArrayObjectID = particleVAO;
-    particleNode->particleSystem = ParticleSystem(14000, 100);
+    particleNode->particleSystem = ParticleSystem(18000, 100);
     // particleNode->textureID = particleTexID;
-    particleNode->position = glm::vec3(0,0,-30);
+    particleNode->position = glm::vec3(0,13,0);
     particleNode->VAOIndexCount = particle.indices.size();
-    rootNode->children.push_back(particleNode);
+    islandNode->children.push_back(particleNode);
 
     // Island
     islandNode->nodeType = GEOMETRY;
     islandNode->vertexArrayObjectID = islandVAO;
     islandNode->VAOIndexCount = island.indices.size();
     islandNode->textureID = getTextureID(&islandTex);
-    islandNode->position = glm::vec3(0, -4, 0);
-
+    islandNode->position = glm::vec3(0, -35, -30);
+    rootNode->children.push_back(islandNode);
 
     getTimeDeltaSeconds();
 
@@ -163,9 +152,6 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar,
     node->MVP = VP * node->currentTransformationMatrix;
 
     switch(node->nodeType) {
-        case POINT_LIGHT:
-            lightSources[node->vertexArrayObjectID].lightPosition = glm::vec3(node->currentTransformationMatrix * glm::vec4(0, 0, 0, 1));
-            break;
         case PARTICLE:
             node->particleSystem.update(deltaTime, node->position, camera.getPos());
             break;
@@ -181,24 +167,6 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar,
 }
 
 void renderNode(SceneNode* node) {
-    if (node->nodeType == POINT_LIGHT || node->nodeType == NORMAL_MAPPED_GEOMETRY) {
-        shader->activate();
-
-        glm::mat3 normalMat = glm::transpose(glm::inverse(node->currentTransformationMatrix));
-
-        glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
-        glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->MVP));
-        glUniformMatrix3fv(5, 1, GL_FALSE, glm::value_ptr(normalMat));
-
-        if (node->nodeType == NORMAL_MAPPED_GEOMETRY) {
-            glUniform1i(11, GL_TRUE);
-            glUniform1i(12, GL_TRUE);
-        } else {
-            glUniform1i(11, GL_FALSE);
-            glUniform1i(12, GL_FALSE);
-        }
-    }
-
     switch(node->nodeType) {
         case GEOMETRY:
             objectShader->activate();
@@ -209,28 +177,12 @@ void renderNode(SceneNode* node) {
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
             break;
-        case POINT_LIGHT:
-            for(int i = 0; i < numLights; i++) {
-                GLint locationLightPosition = shader->getUniformFromName(fmt::format("sources[{}].lightPosition", i));
-                glUniform3fv(locationLightPosition, 1, glm::value_ptr(lightSources[i].lightPosition));
-
-                GLint locationLightColour = shader->getUniformFromName(fmt::format("sources[{}].colour", i));
-                glUniform3fv(locationLightColour, 1, glm::value_ptr(lightSources[i].colour));
-            }
-            break;
-        case NORMAL_MAPPED_GEOMETRY:
-            if(node->vertexArrayObjectID != -1) {
-                glBindTextureUnit(0, node->textureID);
-                glBindTextureUnit(1, node->normalMappedTextureID);
-                glBindVertexArray(node->vertexArrayObjectID);
-            }
-            break;
         case PARTICLE:
             if (node->vertexArrayObjectID != -1) {
                 particleShader->activate();
                 glBindVertexArray(node->vertexArrayObjectID);
                 // glBindTexture(GL_TEXTURE_2D, node->textureID);
-                glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(VP));
+                glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(node->MVP));
                 for (Particle particle : node->particleSystem.particles) {
                     if (particle.lifeTime > 0.0f) {
                         glUniform3fv(1, 1, glm::value_ptr(particle.position));
