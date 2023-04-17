@@ -21,10 +21,6 @@
 #include "utilities/camera.hpp"
 #include "utilities/texture.h"
 
-enum KeyFrameAction {
-    BOTTOM, TOP
-};
-
 SceneNode* rootNode;
 SceneNode* skyNode;
 SceneNode* particleNode;
@@ -34,8 +30,6 @@ SceneNode* islandNode;
 Gloom::Shader* particleShader;
 Gloom::Shader* skyBoxShader;
 Gloom::Shader* objectShader;
-
-CommandLineOptions options;
 
 glm::mat4 VP;
 Gloom::Camera camera(glm::vec3(0, 0, 0));
@@ -47,10 +41,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
     camera.handleKeyboardInputs(key, action);
 }
 
-void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
-
-    options = gameOptions;
-
+void initGame(GLFWwindow* window) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     glfwSetCursorPosCallback(window, mouseCallback);
     glfwSetKeyCallback(window, keyCallback);
