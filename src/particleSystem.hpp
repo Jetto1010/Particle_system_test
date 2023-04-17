@@ -25,16 +25,16 @@ struct Particle {
 
 class ParticleSystem {
 public:
-    ParticleSystem(unsigned int nrParticles = 0, unsigned int nrNewParticles = 0);
+    ParticleSystem(int nrParticles = 0, int nrNewParticles = 0);
     void update(float deltaTime, glm::vec3 position, glm::vec3 cameraPosition);
 
     std::vector<Particle> particles;
 private:
-    unsigned int nrParticles;
-    unsigned int nrNewParticles;
+    int nrParticles;
+    int nrNewParticles;
     double releaseInterval;
 
-    unsigned int firstUnusedParticle();
+    int firstUnusedParticle();
     void spawnParticle(Particle &particle, glm::vec3 position);
 };
 

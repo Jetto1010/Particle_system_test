@@ -3,9 +3,9 @@
 
 #include "particleSystem.hpp"
 
-ParticleSystem::ParticleSystem(unsigned int nrParticles, unsigned int nrNewParticles) : nrParticles(nrParticles), nrNewParticles(nrNewParticles){
+ParticleSystem::ParticleSystem(int nrParticles, int nrNewParticles) : nrParticles(nrParticles), nrNewParticles(nrNewParticles){
     releaseInterval = 1 / 60;
-    for (unsigned int i = 0; i < nrParticles; ++i) {
+    for (int i = 0; i < nrParticles; ++i) {
         this->particles.emplace_back();
     }
 }
@@ -18,15 +18,15 @@ float randomNumber(int min, int max) {
     return ((float)rand() / (float)RAND_MAX) + (float)(min + rand() % (max - min));
 }
 
-unsigned int lastUsedParticle = 0;
-unsigned int ParticleSystem::firstUnusedParticle(){
-    for (unsigned int i = lastUsedParticle; i < nrParticles; ++i) {
+int lastUsedParticle = 0;
+int ParticleSystem::firstUnusedParticle(){
+    for (int i = lastUsedParticle; i < nrParticles; ++i) {
         if (particles[i].lifeTime <= 0.0f){
             lastUsedParticle = i;
             return i;
         }
     }
-    for (unsigned int i = 0; i < lastUsedParticle; ++i) {
+    for (int i = 0; i < lastUsedParticle; ++i) {
         if (particles[i].lifeTime <= 0.0f){
             lastUsedParticle = i;
             return i;
@@ -78,8 +78,8 @@ void ParticleSystem::update(float deltaTime, glm::vec3 position, glm::vec3 camer
     if (elapsedTime > releaseInterval) {
         elapsedTime = 0;
 
-        for (unsigned int i = 0; i < nrNewParticles; ++i) {
-            unsigned int unusedParticle = firstUnusedParticle();
+        for (int i = 0; i < nrNewParticles; ++i) {
+            int unusedParticle = firstUnusedParticle();
             spawnParticle(particles[unusedParticle], position);
         }
     }
