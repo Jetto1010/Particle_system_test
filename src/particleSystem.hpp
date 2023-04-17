@@ -21,6 +21,7 @@ struct Particle {
     glm::vec4 colour;
     float lifeTime;
     float distanceToCamera;
+    bool smoke;
 };
 
 class ParticleSystem {

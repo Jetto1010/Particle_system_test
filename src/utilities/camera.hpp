@@ -36,6 +36,8 @@ namespace Gloom
 
         bool getParticleIsSphere() { return particleIsSphere; }
 
+        float getParticleScale() { return particleScale; }
+
         /* Handle keyboard inputs from a callback mechanism */
         void handleKeyboardInputs(int key, int action)
         {
@@ -133,6 +135,12 @@ namespace Gloom
             if (keysInUse[GLFW_KEY_2])
                 particleIsSphere = false;
 
+            if (keysInUse[GLFW_KEY_3])
+                particleScale += 0.05;
+
+            if (keysInUse[GLFW_KEY_4])
+                particleScale -= 0.05;
+
             // Trick to balance PC speed with movement
             GLfloat velocity = cMovementSpeed * deltaTime;
 
@@ -202,6 +210,7 @@ namespace Gloom
         // Camera settings
         GLfloat cMovementSpeed;
         GLfloat cMouseSensitivity;
+        GLfloat particleScale = 1;
 
         // View matrix
         glm::mat4 matView;

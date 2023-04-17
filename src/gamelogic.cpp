@@ -106,7 +106,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     particleNode->nodeType = PARTICLE;
     particleNode->vertexArrayObjectID = particleSphereVAO;
     particleNode->vertexArrayObjectID2 = particleCubeVAO;
-    particleNode->particleSystem = ParticleSystem(18000, 100);
+    particleNode->particleSystem = ParticleSystem(18000, 200);
     particleNode->position = glm::vec3(-2.5,13,0);
     particleNode->VAOIndexCount = particleSphere.indices.size();
     particleNode->VAOIndexCount2 = particleCube.indices.size();
@@ -187,6 +187,7 @@ void renderNode(SceneNode* node) {
                     glBindVertexArray(node->vertexArrayObjectID2);
                 }
                 glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(node->MVP));
+                glUniform1f(3, camera.getParticleScale());
                 for (Particle particle : node->particleSystem.particles) {
                     if (particle.lifeTime > 0.0f) {
                         glUniform3fv(1, 1, glm::value_ptr(particle.position));

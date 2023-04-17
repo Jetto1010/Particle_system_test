@@ -38,7 +38,6 @@ unsigned int ParticleSystem::firstUnusedParticle(){
 
 void ParticleSystem::spawnParticle(Particle &particle, glm::vec3 position) {
     particle.lifeTime = 1.0f;
-    particle.colour = glm::vec4(1.0f, 1.0f, 0.4f, 1.0f);
 
     // Particles are distributed in a circle
     glm::vec3 randomPos(randomNumber(-5, 5), 0, randomNumber(-5, 5));
@@ -89,13 +88,11 @@ void ParticleSystem::update(float deltaTime, glm::vec3 position, glm::vec3 camer
             p.position += p.velocity * deltaTime;
             p.velocity += p.acceleration * deltaTime;
             p.distanceToCamera = glm::length(p.position - cameraPosition);
-            float alpha = p.lifeTime / 2;
-            p.colour = glm::vec4(0.75,1-(p.position.y - 12)/3,0,0.8);
             if (p.position.y > 17) {
                 p.colour = glm::vec4(0.5, 0.5, 0.5, 0.8);
+            } else {
+                p.colour = glm::vec4(0.75,1-(p.position.y - 12)/3,0,0.8);
             }
-
-
         }
     }
 
