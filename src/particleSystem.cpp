@@ -40,27 +40,29 @@ void ParticleSystem::spawnParticle(Particle &particle, glm::vec3 position) {
     particle.lifeTime = 1.0f;
 
     // Particles are distributed in a circle
-    glm::vec3 randomPos(randomNumber(-5, 5), 0, randomNumber(-5, 5));
-    while (length(randomPos) > 5) {
-        randomPos = glm::vec3(randomNumber(-5, 5), 0, randomNumber(-5, 5));
+    int radius = 5;
+    glm::vec3 randomPos(randomNumber(-radius, radius), 0, randomNumber(-radius, radius));
+    while (length(randomPos) > (float)radius) {
+        randomPos = glm::vec3(randomNumber(-radius, radius), 0, randomNumber(-radius, radius));
     }
     particle.position = position + randomPos;
 
     // Make particles drift towards the center
-    glm::vec2 xRange(0,0);
-    glm::vec2 zRange(0,0);
+    int particleLength = radius;
+    glm::vec2 xRange(-particleLength,particleLength);
+    glm::vec2 zRange(-particleLength,particleLength);
     if (randomPos.x < 0) {
-        xRange = glm::vec2(0,5);
+        xRange.x = 0;
     } else {
-        xRange = glm::vec2(-5,0);
+        xRange.y = 0;
     }
     if (randomPos.z < 0) {
-        zRange = glm::vec2(0,5);
+        zRange.x = 0;
     } else {
-        zRange = glm::vec2(-5,0);
+        zRange.y = 0;
     }
     glm::vec3 randomVel(randomNumber(xRange.x, xRange.y), 0, randomNumber(zRange.x, zRange.y));
-    while (length(randomVel) > 5) {
+    while (length(randomVel) > particleLength) {
         randomVel = glm::vec3(randomNumber(xRange.x, xRange.y), 0, randomNumber(zRange.x, zRange.y));
     }
     // The closer to the center the higher
@@ -70,7 +72,7 @@ void ParticleSystem::spawnParticle(Particle &particle, glm::vec3 position) {
     particle.acceleration = glm::vec3(-randomVel.x, 0,-randomVel.z);
 }
 
-
+double elapsedTime = 0;
 void ParticleSystem::update(float deltaTime, glm::vec3 position, glm::vec3 cameraPosition) {
     elapsedTime += deltaTime;
     if (elapsedTime > releaseInterval) {

@@ -71,7 +71,7 @@ void initGame(GLFWwindow* window) {
     // Create meshes
     Mesh skybox = cube(glm::vec3(360), glm::vec2(90), true, true);
     Mesh particleCube = generateSphere(0.5f, 10, 10);
-    Mesh particleSphere = cube(glm::vec3(1.0f), glm::vec2(90), true, false);
+    Mesh particleSphere = cube(glm::vec3(0.5f), glm::vec2(90), true, false);
     Mesh island = Mesh("../res/objects/island2.obj");
 
     // Fill buffers

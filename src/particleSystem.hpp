@@ -33,7 +33,6 @@ private:
     unsigned int nrParticles;
     unsigned int nrNewParticles;
     double releaseInterval;
-    double elapsedTime = 0;
 
     unsigned int firstUnusedParticle();
     void spawnParticle(Particle &particle, glm::vec3 position);
