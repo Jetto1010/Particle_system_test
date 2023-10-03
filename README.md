@@ -1,6 +1,4 @@
-# TDT4230 - Graphics and Visualization
-
-Particle system made by Jørund
+# Particle system test
 
 Movement -- WASD
 
